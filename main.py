@@ -1,4 +1,3 @@
-from tkinter import PROJECTING
 import pygame
 import numpy as np
 
