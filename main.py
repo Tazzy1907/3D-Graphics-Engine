@@ -11,12 +11,16 @@ HEIGHT = 900
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 SCREEN.fill(BLACK)
 
+FPS = 20
+
 # Constants for the projection matrix / other use.
 NEAR = 0.1
 FAR = 1000
-FOV = 90
+FOV = 135
 ASPECTRATIO = HEIGHT / WIDTH  # 1.7777777
 FOVRAD = 1 / (np.tan(FOV * 0.5 / 180 * np.pi))  # 1.0000000000000002
+
+clock = pygame.time.Clock()
 
 
 class Vec3D: # Each Vec3D should be a point, with an x, y, z coordinate.
@@ -80,7 +84,7 @@ class Matrix4x4:
         self.matrix[1][0] = -1 * np.sin(theta)
         self.matrix[1][1] = np.cos(theta)
         self.matrix[2][2] = 1
-        self.matrix[2][2] = 1
+        self.matrix[3][3] = 1
     
 
     def rotation_x(self):
@@ -113,6 +117,7 @@ def update():
 
 
 def on_user_update():
+    
     cubeMesh = Mesh()
     points = [  # Coordinates of cube split into triangles.
         # South
@@ -145,28 +150,37 @@ def on_user_update():
     projection.projection_matrix() # Creates an instance of the projection matrix.
 
     rotation_z = Matrix4x4() # Matrix for rotation around the z-axis.
-    rotation_z.rotation_z
+    rotation_z.rotation_z()
     
     rotation_x = Matrix4x4() # Matrix for rotation around the x-axis.
-    rotation_x.rotation_x
+    rotation_x.rotation_x()
 
+    print(cubeMesh.tris)
+    print(theta)
 
+    SCREEN.fill(BLACK)
     for i in cubeMesh.tris: # Iterates through .tris, getting each triangle's coordinates and feeding to the instance
          # of the Triangle class, called tri_projected.
 
         vec_one = Vec3D(i[0][0], i[0][1], i[0][2])
         vec_two = Vec3D(i[1][0], i[1][1], i[1][2])
         vec_three = Vec3D(i[2][0], i[2][1], i[2][2])
-        
-        vec_one.z += 3
-        vec_two.z += 3
-        vec_three.z += 3
 
-        temp = Triangle(vec_one.display(), vec_two.display(), vec_three.display())
+        vec_onex = matrix_vector_multiplication(vec_one, rotation_z)  # Translates the vectors by a rotation in the z-axis.
+        vec_twox = matrix_vector_multiplication(vec_two, rotation_z)
+        vec_threex = matrix_vector_multiplication(vec_three, rotation_z)
 
-        proj_vec1 = matrix_vector_multiplication(temp.display(0), projection)  # Multiplies vector by projection matrix.
-        proj_vec2 = matrix_vector_multiplication(temp.display(1), projection)
-        proj_vec3 = matrix_vector_multiplication(temp.display(2), projection)
+        vec_onexz = matrix_vector_multiplication(vec_onex, rotation_x)  # Translates the vectors by a rotation in the x-axis.
+        vec_twoxz = matrix_vector_multiplication(vec_twox, rotation_x)
+        vec_threexz = matrix_vector_multiplication(vec_threex, rotation_x)
+
+        vec_onexz.z += 3  # Offset
+        vec_twoxz.z += 3
+        vec_threexz.z += 3
+
+        proj_vec1 = matrix_vector_multiplication(vec_onexz, projection)  # Multiplies vector by projection matrix.
+        proj_vec2 = matrix_vector_multiplication(vec_twoxz, projection)
+        proj_vec3 = matrix_vector_multiplication(vec_threexz, projection)
         
         projected_triangle = Triangle(proj_vec1.display(), proj_vec2.display(), proj_vec3.display())
 
@@ -183,6 +197,8 @@ def on_user_update():
         projected_triangle.display(2).y *= 0.5 * HEIGHT
 
         draw_triangle(projected_triangle)
+    
+    pygame.display.update()
         
     return    
 
@@ -191,8 +207,10 @@ def draw_triangle(input_triangle):
     
     pygame.draw.line(SCREEN, WHITE, (input_triangle.display(0).x, input_triangle.display(0).y),
                     (input_triangle.display(1).x, input_triangle.display(1).y))
+    
     pygame.draw.line(SCREEN, WHITE, (input_triangle.display(1).x, input_triangle.display(1).y),
                     (input_triangle.display(2).x, input_triangle.display(2).y))
+    
     pygame.draw.line(SCREEN, WHITE, (input_triangle.display(2).x, input_triangle.display(2).y),
                     (input_triangle.display(0).x, input_triangle.display(0).y))
 
@@ -200,7 +218,6 @@ def draw_triangle(input_triangle):
 def main():
     global theta
     theta = 1
-
 
     running = True
 
@@ -213,6 +230,8 @@ def main():
         theta += 1  # Elapsed time.
         on_user_update()
         pygame.display.flip()
+        clock.tick(FPS)
+
 
     pygame.quit()
 
