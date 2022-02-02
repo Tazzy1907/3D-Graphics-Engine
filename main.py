@@ -1,4 +1,4 @@
-from tkinter import OFF
+from audioop import cross
 import pygame
 import numpy as np
 
@@ -6,8 +6,8 @@ import numpy as np
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
-WIDTH = 1600  # Dimensions of the screen.
-HEIGHT = 900
+WIDTH = 800  # Dimensions of the screen.
+HEIGHT = 450
 
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 SCREEN.fill(BLACK)
@@ -24,7 +24,6 @@ ASPECTRATIO = HEIGHT / WIDTH  # 1.7777777
 FOVRAD = 1 / (np.tan(FOV * 0.5 / 180 * np.pi))  # 1.0000000000000002
 
 clock = pygame.time.Clock()
-
 
 class Vec3D:  # Each Vec3D should be a point, with an x, y, z coordinate.
     def __init__(self, x=0, y=0, z=0):
@@ -181,10 +180,14 @@ def on_user_update():
         # Normal is "normalised" into a unit vector, via calculating the magnitude of the normal and dividing each component
         # of the vector by said magnitude.
 
-        magnitude = np.sqrt(np.square(normal.x) + np.square(normal.y) + np.square(normal.z))
-        normal.x /= magnitude; normal.y /= magnitude; normal.z /= magnitude
+        normal_magnitude = np.sqrt(np.square(normal.x) + np.square(normal.y) + np.square(normal.z))
+        normal.x /= normal_magnitude; normal.y /= normal_magnitude; normal.z /= normal_magnitude
 
-        if normal.z < 0:
+        cross_product = normal.x * (vec_one.x - camera.x) + \
+                        normal.y * (vec_one.y - camera.y) + \
+                        normal.z * (vec_one.z - camera.z)
+
+        if cross_product < 0:
             proj_vec1 = matrix_vector_multiplication(vec_one, projection)  # Multiplies vector by projection matrix.
             proj_vec2 = matrix_vector_multiplication(vec_two, projection)
             proj_vec3 = matrix_vector_multiplication(vec_three, projection)
@@ -223,7 +226,9 @@ def draw_triangle(input_triangle):
 
 def main():
     global theta
+    global camera
     theta = 0
+    camera = Vec3D()
 
     running = True
 
