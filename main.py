@@ -27,7 +27,7 @@ clock = pygame.time.Clock()
 
 
 class Vec3D:  # Each Vec3D should be a point, with an x, y, z coordinate.
-    def __init__(self, x, y, z):
+    def __init__(self, x=0, y=0, z=0):
         self.x = x
         self.y = y
         self.z = z
@@ -87,16 +87,12 @@ class Matrix4x4:
         return self.matrix
 
 
-def matrix_vector_multiplication(inputv,
-                                 matrix):  # Inputv is a vector, from the Vec3D class. Matrix is of the Matrix4x4 Class.
-    x = inputv.x * matrix.matrix[0][0] + inputv.y * matrix.matrix[1][0] + inputv.z * matrix.matrix[2][0] + \
-        matrix.matrix[3][0]
-    y = inputv.x * matrix.matrix[0][1] + inputv.y * matrix.matrix[1][1] + inputv.z * matrix.matrix[2][1] + \
-        matrix.matrix[3][1]
-    z = inputv.x * matrix.matrix[0][2] + inputv.y * matrix.matrix[1][2] + inputv.z * matrix.matrix[2][2] + \
-        matrix.matrix[3][2]
-    w = inputv.x * matrix.matrix[0][3] + inputv.y * matrix.matrix[1][3] + inputv.z * matrix.matrix[2][3] + \
-        matrix.matrix[3][3]  # Has to be included due to the 4x4 matrix.
+def matrix_vector_multiplication(inputv, matrix):  # Inputv is a vector, from the Vec3D class. Matrix is of the Matrix4x4 Class.
+                                
+    x = inputv.x * matrix.matrix[0][0] + inputv.y * matrix.matrix[1][0] + inputv.z * matrix.matrix[2][0] + matrix.matrix[3][0]
+    y = inputv.x * matrix.matrix[0][1] + inputv.y * matrix.matrix[1][1] + inputv.z * matrix.matrix[2][1] + matrix.matrix[3][1]
+    z = inputv.x * matrix.matrix[0][2] + inputv.y * matrix.matrix[1][2] + inputv.z * matrix.matrix[2][2] + matrix.matrix[3][2]
+    w = inputv.x * matrix.matrix[0][3] + inputv.y * matrix.matrix[1][3] + inputv.z * matrix.matrix[2][3] + matrix.matrix[3][3]  # Has to be included due to the 4x4 matrix.
 
     outputv = Vec3D(x, y, z)
 
@@ -155,42 +151,62 @@ def on_user_update():
         vec_two = Vec3D(i[1][0], i[1][1], i[1][2])
         vec_three = Vec3D(i[2][0], i[2][1], i[2][2])
 
-        vec_onex = matrix_vector_multiplication(vec_one,
-                                                rotation_z)  # Translates the vectors by a rotation in the z-axis.
-        vec_twox = matrix_vector_multiplication(vec_two, rotation_z)
-        vec_threex = matrix_vector_multiplication(vec_three, rotation_z)
+        vec_one = matrix_vector_multiplication(vec_one, rotation_z)  # Translates the vectors by a rotation in the z-axis.                                  
+        vec_two = matrix_vector_multiplication(vec_two, rotation_z)
+        vec_three = matrix_vector_multiplication(vec_three, rotation_z)
 
-        vec_onexz = matrix_vector_multiplication(vec_onex,
-                                                 rotation_x)  # Translates the vectors by a rotation in the x-axis.
-        vec_twoxz = matrix_vector_multiplication(vec_twox, rotation_x)
-        vec_threexz = matrix_vector_multiplication(vec_threex, rotation_x)
+        vec_one = matrix_vector_multiplication(vec_one, rotation_x)  # Translates the vectors by a rotation in the x-axis.
+        vec_two = matrix_vector_multiplication(vec_two, rotation_x)
+        vec_three = matrix_vector_multiplication(vec_three, rotation_x)
 
-        vec_onexz.z += OFFSET  # Offset
-        vec_twoxz.z += OFFSET
-        vec_threexz.z += OFFSET
+        vec_one.z += OFFSET  # Offset
+        vec_two.z += OFFSET
+        vec_three.z += OFFSET
 
-        proj_vec1 = matrix_vector_multiplication(vec_onexz, projection)  # Multiplies vector by projection matrix.
-        proj_vec2 = matrix_vector_multiplication(vec_twoxz, projection)
-        proj_vec3 = matrix_vector_multiplication(vec_threexz, projection)
+        line1 = Vec3D(); line2 = Vec3D(); normal = Vec3D()
 
-        projected_triangle = Triangle(proj_vec1.display(), proj_vec2.display(), proj_vec3.display())
+        line1.x = vec_two.x - vec_one.x  # Line 1 is the vector A->B
+        line1.y = vec_two.y - vec_one.y
+        line1.z = vec_two.z - vec_one.z
 
-        # "Scale into view"
-        projected_triangle.display(0).x += 1.0;
-        projected_triangle.display(0).y += 1.0
-        projected_triangle.display(1).x += 1.0;
-        projected_triangle.display(1).y += 1.0
-        projected_triangle.display(2).x += 1.0;
-        projected_triangle.display(2).y += 1.0
+        line2.x = vec_three.x - vec_one.x  # Line 2 is the vector A->C
+        line2.y = vec_three.y - vec_one.y
+        line2.z = vec_three.z - vec_one.z
 
-        projected_triangle.display(0).x *= 0.5 * WIDTH
-        projected_triangle.display(0).y *= 0.5 * HEIGHT
-        projected_triangle.display(1).x *= 0.5 * WIDTH
-        projected_triangle.display(1).y *= 0.5 * HEIGHT
-        projected_triangle.display(2).x *= 0.5 * WIDTH
-        projected_triangle.display(2).y *= 0.5 * HEIGHT
+        # Normal is the cross product of the two lines.
+        normal.x = line1.y * line2.z - line1.z * line2.y
+        normal.y = line1.z * line2.x - line1.x * line2.z
+        normal.z = line1.x * line2.y - line1.y * line2.x
 
-        draw_triangle(projected_triangle)
+        # Normal is "normalised" into a unit vector, via calculating the magnitude of the normal and dividing each component
+        # of the vector by said magnitude.
+
+        magnitude = np.sqrt(np.square(normal.x) + np.square(normal.y) + np.square(normal.z))
+        normal.x /= magnitude; normal.y /= magnitude; normal.z /= magnitude
+
+        if normal.z < 0:
+            proj_vec1 = matrix_vector_multiplication(vec_one, projection)  # Multiplies vector by projection matrix.
+            proj_vec2 = matrix_vector_multiplication(vec_two, projection)
+            proj_vec3 = matrix_vector_multiplication(vec_three, projection)
+
+            projected_triangle = Triangle(proj_vec1.display(), proj_vec2.display(), proj_vec3.display())
+
+            # "Scale into view"
+            projected_triangle.display(0).x += 1.0
+            projected_triangle.display(0).y += 1.0
+            projected_triangle.display(1).x += 1.0
+            projected_triangle.display(1).y += 1.0
+            projected_triangle.display(2).x += 1.0
+            projected_triangle.display(2).y += 1.0
+
+            projected_triangle.display(0).x *= 0.5 * WIDTH
+            projected_triangle.display(0).y *= 0.5 * HEIGHT
+            projected_triangle.display(1).x *= 0.5 * WIDTH
+            projected_triangle.display(1).y *= 0.5 * HEIGHT
+            projected_triangle.display(2).x *= 0.5 * WIDTH
+            projected_triangle.display(2).y *= 0.5 * HEIGHT
+
+            draw_triangle(projected_triangle)
 
     pygame.display.update()
 
@@ -198,19 +214,16 @@ def on_user_update():
 
 
 def draw_triangle(input_triangle):
-    pygame.draw.line(SCREEN, WHITE, (input_triangle.display(0).x, input_triangle.display(0).y),
-                     (input_triangle.display(1).x, input_triangle.display(1).y))
+    pygame.draw.line(SCREEN, WHITE, (input_triangle.display(0).x, input_triangle.display(0).y), (input_triangle.display(1).x, input_triangle.display(1).y))
 
-    pygame.draw.line(SCREEN, WHITE, (input_triangle.display(1).x, input_triangle.display(1).y),
-                     (input_triangle.display(2).x, input_triangle.display(2).y))
+    pygame.draw.line(SCREEN, WHITE, (input_triangle.display(1).x, input_triangle.display(1).y), (input_triangle.display(2).x, input_triangle.display(2).y))
 
-    pygame.draw.line(SCREEN, WHITE, (input_triangle.display(2).x, input_triangle.display(2).y),
-                     (input_triangle.display(0).x, input_triangle.display(0).y))
+    pygame.draw.line(SCREEN, WHITE, (input_triangle.display(2).x, input_triangle.display(2).y), (input_triangle.display(0).x, input_triangle.display(0).y))
 
 
 def main():
     global theta
-    theta = 1
+    theta = 0
 
     running = True
 
