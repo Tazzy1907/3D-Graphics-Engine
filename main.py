@@ -2,20 +2,26 @@ import pygame
 import numpy as np
 
 # Constants
+
+# Colours
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
-WIDTH = 800  # Dimensions of the screen.
-HEIGHT = 450
+WIDTH = 1600  # Dimensions of the screen.
+HEIGHT = 900
 
-SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
+SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))  # PyGame init constants.
 SCREEN.fill(BLACK)
 
+clock = pygame.time.Clock()  # FPS / Clock Function
 FPS = 60
+
+theta = 0  # Theta is used for elapsed time.
 THETA_INCREMENT = 0.02
+
 LEAVE_TRAIL = False  # Change if user wishes to leave a trail behind. (Not refreshing the screen after an image has been drawn.)
 
-# Constants for the projection matrix / other use.
+# Constants for the mathematic functions.
 OFFSET = 3
 NEAR = 0.1
 FAR = 1000
@@ -23,7 +29,6 @@ FOV = 90
 ASPECTRATIO = HEIGHT / WIDTH  # 1.7777777
 FOVRAD = 1 / (np.tan(FOV * 0.5 / 180 * np.pi))  # 1.0000000000000002
 
-clock = pygame.time.Clock()
 
 class Vec3D:  # Each Vec3D should be a point, with an x, y, z coordinate.
     def __init__(self, x=0, y=0, z=0):
@@ -51,7 +56,7 @@ class Mesh:  # Each Mesh should be made up of triangles.
         self.tris = np.array(tris)
 
     def display_tris(self):
-        print(self.tris)
+        return self.tris
 
 
 class Matrix4x4:
@@ -182,11 +187,11 @@ def draw_points(mesh):
         normal_magnitude = np.sqrt(np.square(normal.x) + np.square(normal.y) + np.square(normal.z))
         normal.x /= normal_magnitude; normal.y /= normal_magnitude; normal.z /= normal_magnitude
 
-        cross_product = normal.x * (vec_one.x - camera.x) + \
+        dot_product = normal.x * (vec_one.x - camera.x) + \
                         normal.y * (vec_one.y - camera.y) + \
                         normal.z * (vec_one.z - camera.z)
 
-        if cross_product < 0:
+        if dot_product < 0:
             proj_vec1 = matrix_vector_multiplication(vec_one, projection)  # Multiplies vector by projection matrix.
             proj_vec2 = matrix_vector_multiplication(vec_two, projection)
             proj_vec3 = matrix_vector_multiplication(vec_three, projection)
@@ -211,21 +216,19 @@ def draw_points(mesh):
             draw_triangle(projected_triangle)
 
     pygame.display.update()
+    
     return
     
 
 def draw_triangle(input_triangle):
     pygame.draw.line(SCREEN, WHITE, (input_triangle.display(0).x, input_triangle.display(0).y), (input_triangle.display(1).x, input_triangle.display(1).y))
-
     pygame.draw.line(SCREEN, WHITE, (input_triangle.display(1).x, input_triangle.display(1).y), (input_triangle.display(2).x, input_triangle.display(2).y))
-
     pygame.draw.line(SCREEN, WHITE, (input_triangle.display(2).x, input_triangle.display(2).y), (input_triangle.display(0).x, input_triangle.display(0).y))
-
+    
     return
 
 
 def on_user_update():
-
     cubeMesh = cube()  # Contains points for a 3D cube.
     draw_points(cubeMesh)
     
@@ -233,9 +236,9 @@ def on_user_update():
 
 
 def main():
-    global theta
     global camera
-    theta = 0
+    global theta
+
     camera = Vec3D()
 
     running = True
@@ -252,6 +255,8 @@ def main():
         clock.tick(FPS)
 
     pygame.quit()
+
+    return
 
 
 pygame.init()
