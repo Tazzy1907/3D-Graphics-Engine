@@ -1,4 +1,3 @@
-from audioop import cross
 import pygame
 import numpy as np
 
@@ -14,6 +13,7 @@ SCREEN.fill(BLACK)
 
 FPS = 60
 THETA_INCREMENT = 0.02
+LEAVE_TRAIL = False  # Change if user wishes to leave a trail behind. (Not refreshing the screen after an image has been drawn.)
 
 # Constants for the projection matrix / other use.
 OFFSET = 3
@@ -103,12 +103,7 @@ def matrix_vector_multiplication(inputv, matrix):  # Inputv is a vector, from th
     return outputv
 
 
-def update():
-    pygame.display.update()
-
-
-def on_user_update():
-
+def cube():
     points = [  # Coordinates of cube split into triangles.
         # South
         [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0]],
@@ -136,14 +131,18 @@ def on_user_update():
 
     cubeMesh = Mesh(points)
 
+    return cubeMesh
+
+
+def draw_points(mesh):
     projection = Matrix4x4("projection")  # Creates an instance of the projection matrix.
-
     rotation_z = Matrix4x4("z")  # Matrix for rotation around the z-axis.
-
     rotation_x = Matrix4x4("x")  # Matrix for rotation around the x-axis.
 
-    SCREEN.fill(BLACK)
-    for i in cubeMesh.tris:  # Iterates through .tris, getting each triangle's coordinates and feeding to the instance
+    if not LEAVE_TRAIL:
+        SCREEN.fill(BLACK)
+
+    for i in mesh.tris:  # Iterates through .tris, getting each triangle's coordinates and feeding to the instance
         # of the Triangle class, called tri_projected.
 
         vec_one = Vec3D(i[0][0], i[0][1], i[0][2])
@@ -212,9 +211,8 @@ def on_user_update():
             draw_triangle(projected_triangle)
 
     pygame.display.update()
-
     return
-
+    
 
 def draw_triangle(input_triangle):
     pygame.draw.line(SCREEN, WHITE, (input_triangle.display(0).x, input_triangle.display(0).y), (input_triangle.display(1).x, input_triangle.display(1).y))
@@ -222,6 +220,16 @@ def draw_triangle(input_triangle):
     pygame.draw.line(SCREEN, WHITE, (input_triangle.display(1).x, input_triangle.display(1).y), (input_triangle.display(2).x, input_triangle.display(2).y))
 
     pygame.draw.line(SCREEN, WHITE, (input_triangle.display(2).x, input_triangle.display(2).y), (input_triangle.display(0).x, input_triangle.display(0).y))
+
+    return
+
+
+def on_user_update():
+
+    cubeMesh = cube()  # Contains points for a 3D cube.
+    draw_points(cubeMesh)
+    
+    return
 
 
 def main():
