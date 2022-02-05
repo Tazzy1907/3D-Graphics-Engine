@@ -20,6 +20,7 @@ theta = 0  # Theta is used for elapsed time.
 THETA_INCREMENT = 0.02
 
 LEAVE_TRAIL = False  # Change if user wishes to leave a trail behind. (Not refreshing the screen after an image has been drawn.)
+DRAW_NET = False  # Change if the user wishes only to view the edges of the shape, and not whole colours.
 
 # Constants for the mathematic functions.
 OFFSET = 3
@@ -108,6 +109,24 @@ def matrix_vector_multiplication(inputv, matrix):  # Inputv is a vector, from th
     return outputv
 
 
+def normalise(vector, component):  # Function to normalise vectors by creating a unit vector.
+    magnitude = np.sqrt(np.square(vector.x) + np.square(vector.y) + np.square(vector.z))
+    vector.x /= magnitude; vector.y /= magnitude; vector.z /= magnitude
+
+    if component == 'x':
+        return vector.x
+    elif component == 'y':
+        return vector.y
+    elif component == 'z':
+        return vector.z
+
+
+def dot_product(vector1, vector2):
+    dp = (vector1.x * vector2.x) + (vector1.y * vector2.y) + (vector1.z * vector2.z)
+
+    return dp
+
+
 def cube():
     points = [  # Coordinates of cube split into triangles.
         # South
@@ -137,6 +156,13 @@ def cube():
     cubeMesh = Mesh(points)
 
     return cubeMesh
+
+def colour_scale(dot_product, colour=np.full(3, 0.0)):
+    for i in range(3):
+        colour[0] = 255 * dot_product
+        colour[2] = 255 * dot_product
+
+    return colour
 
 
 def draw_points(mesh):
@@ -184,14 +210,23 @@ def draw_points(mesh):
         # Normal is "normalised" into a unit vector, via calculating the magnitude of the normal and dividing each component
         # of the vector by said magnitude.
 
-        normal_magnitude = np.sqrt(np.square(normal.x) + np.square(normal.y) + np.square(normal.z))
-        normal.x /= normal_magnitude; normal.y /= normal_magnitude; normal.z /= normal_magnitude
+        normal.x = normalise(normal, 'x'); normal.y = normalise(normal, 'y'); normal.z = normalise(normal, 'z') 
 
-        dot_product = normal.x * (vec_one.x - camera.x) + \
-                        normal.y * (vec_one.y - camera.y) + \
-                        normal.z * (vec_one.z - camera.z)
+        camera_to_normal = Vec3D(vec_one.x - camera.x, vec_one.y - camera.y, vec_one.z - camera.z) # Vector of camera to the normal.
 
-        if dot_product < 0:
+        normal_dp = dot_product(normal, camera_to_normal)
+
+        if normal_dp < 0:
+            
+            light_direction = Vec3D(0, 0, -1)  # Lighting, facing towards the play. Done so that we check how aligned the normal of a 
+            # plane is with the light direction. Just like above, the light direction is normalised to a unit vector.
+            light_direction.x = normalise(light_direction, 'x'); light_direction.y = normalise(light_direction, 'y')
+            light_direction.z = normalise(light_direction, 'z')
+
+            light_dp = dot_product(normal, light_direction)
+
+            colour_scale(light_dp)
+
             proj_vec1 = matrix_vector_multiplication(vec_one, projection)  # Multiplies vector by projection matrix.
             proj_vec2 = matrix_vector_multiplication(vec_two, projection)
             proj_vec3 = matrix_vector_multiplication(vec_three, projection)
@@ -213,18 +248,27 @@ def draw_points(mesh):
             projected_triangle.display(2).x *= 0.5 * WIDTH
             projected_triangle.display(2).y *= 0.5 * HEIGHT
 
-            draw_triangle(projected_triangle)
+            draw_triangle(projected_triangle, colour_scale(light_dp))
 
     pygame.display.update()
     
     return
     
 
-def draw_triangle(input_triangle):
-    pygame.draw.line(SCREEN, WHITE, (input_triangle.display(0).x, input_triangle.display(0).y), (input_triangle.display(1).x, input_triangle.display(1).y))
-    pygame.draw.line(SCREEN, WHITE, (input_triangle.display(1).x, input_triangle.display(1).y), (input_triangle.display(2).x, input_triangle.display(2).y))
-    pygame.draw.line(SCREEN, WHITE, (input_triangle.display(2).x, input_triangle.display(2).y), (input_triangle.display(0).x, input_triangle.display(0).y))
-    
+def draw_triangle(input_triangle, colour=WHITE):
+    if not DRAW_NET:
+        pygame.draw.polygon(SCREEN, colour, (
+            (input_triangle.display(0).x, input_triangle.display(0).y),  # Points of triangle.
+            (input_triangle.display(1).x, input_triangle.display(1).y),
+            (input_triangle.display(2).x, input_triangle.display(2).y)))
+    else:
+        pygame.draw.line(SCREEN, colour, (input_triangle.display(0).x, input_triangle.display(0).y),
+                     (input_triangle.display(1).x, input_triangle.display(1).y))
+        pygame.draw.line(SCREEN, WHITE, (input_triangle.display(1).x, input_triangle.display(1).y),
+                        (input_triangle.display(2).x, input_triangle.display(2).y))
+        pygame.draw.line(SCREEN, WHITE, (input_triangle.display(2).x, input_triangle.display(2).y),
+                        (input_triangle.display(0).x, input_triangle.display(0).y))
+
     return
 
 
