@@ -92,6 +92,52 @@ class Matrix4x4:
         return self.matrix
 
 
+def analyse_file(file):  # Function to read through object files.
+    file_contents = []
+    coords = []
+    addresses = []
+
+    for line in file:
+        file_contents.append(line)
+
+    for i in range(3):
+        file_contents.pop(0)
+
+    address_count = 0
+    for i in range(len(file_contents)):
+        if file_contents[i][0] == 'v':
+            file_contents[i] = file_contents[i][2:]
+            file_contents[i] == file_contents[i][:-1]
+            coords.append(file_contents[i].split())
+
+            for j in range(len(coords[i])):
+                coords[i][j] = float(coords[i][j])
+
+        
+        elif file_contents[i][0] == "f":
+            file_contents[i] = file_contents[i][2:]
+            file_contents[i] == file_contents[i][:-1]
+            addresses.append(file_contents[i].split())
+
+            for j in range(len(addresses[address_count])):
+                addresses[address_count][j] = int(addresses[address_count][j])
+            address_count += 1
+    
+    return coords, addresses
+
+
+def create_tris(file):  # Creates triangles for the mesh to form.
+    coords, addresses = analyse_file(file)
+    triangles = []
+    for triangle_face in addresses:
+        triangle = []
+        for address in triangle_face:
+            triangle.append(coords[address - 1])
+        triangles.append(triangle)
+        
+    return triangles
+
+
 def matrix_vector_multiplication(inputv, matrix):  # Inputv is a vector, from the Vec3D class. Matrix is of the Matrix4x4 Class.
                                 
     x = inputv.x * matrix.matrix[0][0] + inputv.y * matrix.matrix[1][0] + inputv.z * matrix.matrix[2][0] + matrix.matrix[3][0]
@@ -157,11 +203,33 @@ def cube():
 
     return cubeMesh
 
+
+def sphere():
+    file = open(r'Graphics Engine\sphereblend.obj')
+    
+    points = create_tris(file)
+
+    sphereMesh = Mesh(points)
+
+    return sphereMesh
+
+
+def torus():
+    file = open(r'Graphics Engine\torus.obj')
+
+    points = create_tris(file)
+
+    torusMesh = Mesh(points)
+
+    return torusMesh
+
+
 def colour_scale(dot_product, colour=np.full(3, 0.0)):
     for i in range(3):
-        colour[0] = 255 * dot_product
-        colour[2] = 255 * dot_product
+        colour[0] = 255 * abs(dot_product)  # Abs function has been added as a temporary fix.
+        colour[2] = 255 * abs(dot_product)
 
+    print(colour)
     return colour
 
 
@@ -274,7 +342,10 @@ def draw_triangle(input_triangle, colour=WHITE):
 
 def on_user_update():
     cubeMesh = cube()  # Contains points for a 3D cube.
-    draw_points(cubeMesh)
+    sphereMesh = sphere()
+    torusMesh = torus()
+    
+    draw_points(torusMesh)
     
     return
 
