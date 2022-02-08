@@ -31,9 +31,9 @@ ASPECTRATIO = HEIGHT / WIDTH  # 1.7777777
 FOVRAD = 1 / (np.tan(FOV * 0.5 / 180 * np.pi))  # 1.0000000000000002
 
 # Locations
-SPHERE_LOCATION = r'sphereblend.obj'
-TORUS_LOCATION = r'torus.obj'
-MONKEY_LOCATION = '' # Needs to be input.
+SPHERE_LOCATION = r'Object Files\sphereblend.obj'
+TORUS_LOCATION = r'Object Files\torus.obj'
+MONKEY_LOCATION = r'Object Files\monkey.obj' # Needs to be input.
 
 
 class Vec3D:  # Each Vec3D should be a point, with an x, y, z coordinate.
