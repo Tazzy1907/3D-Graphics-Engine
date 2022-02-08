@@ -23,7 +23,7 @@ LEAVE_TRAIL = False  # Change if user wishes to leave a trail behind. (Not refre
 DRAW_NET = False  # Change if the user wishes only to view the edges of the shape, and not whole colours.
 
 # Constants for the mathematic functions.
-OFFSET = 3
+OFFSET = 6
 NEAR = 0.1
 FAR = 1000
 FOV = 90
@@ -31,8 +31,8 @@ ASPECTRATIO = HEIGHT / WIDTH  # 1.7777777
 FOVRAD = 1 / (np.tan(FOV * 0.5 / 180 * np.pi))  # 1.0000000000000002
 
 # Locations
-SPHERE_LOCATION = r'Graphics Engine\sphereblend.obj'
-TORUS_LOCATION = r'Graphics Engine\torus.obj'
+SPHERE_LOCATION = r'sphereblend.obj'
+TORUS_LOCATION = r'torus.obj'
 MONKEY_LOCATION = '' # Needs to be input.
 
 
@@ -234,7 +234,6 @@ def colour_scale(dot_product, colour=np.full(3, 0.0)):
         colour[0] = 255 * abs(dot_product)  # Abs function has been added as a temporary fix.
         colour[2] = 255 * abs(dot_product)
 
-    print(colour)
     return colour
 
 
