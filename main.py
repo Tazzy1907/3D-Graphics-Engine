@@ -30,6 +30,11 @@ FOV = 90
 ASPECTRATIO = HEIGHT / WIDTH  # 1.7777777
 FOVRAD = 1 / (np.tan(FOV * 0.5 / 180 * np.pi))  # 1.0000000000000002
 
+# Locations
+SPHERE_LOCATION = r'Graphics Engine\sphereblend.obj'
+TORUS_LOCATION = r'Graphics Engine\torus.obj'
+MONKEY_LOCATION = '' # Needs to be input.
+
 
 class Vec3D:  # Each Vec3D should be a point, with an x, y, z coordinate.
     def __init__(self, x=0, y=0, z=0):
@@ -205,7 +210,7 @@ def cube():
 
 
 def sphere():
-    file = open(r'Graphics Engine\sphereblend.obj')
+    file = open(SPHERE_LOCATION)
     
     points = create_tris(file)
 
@@ -215,7 +220,7 @@ def sphere():
 
 
 def torus():
-    file = open(r'Graphics Engine\torus.obj')
+    file = open(TORUS_LOCATION)
 
     points = create_tris(file)
 
