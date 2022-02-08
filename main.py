@@ -328,18 +328,21 @@ def draw_points(mesh):
     
 
 def draw_triangle(input_triangle, colour=WHITE):
-    if not DRAW_NET:
+    if not DRAW_NET:  # If the DRAW_NET option is not enabled, it will draw filled triangles, else it will draw single lines to make up the triangle.
         pygame.draw.polygon(SCREEN, colour, (
             (input_triangle.display(0).x, input_triangle.display(0).y),  # Points of triangle.
             (input_triangle.display(1).x, input_triangle.display(1).y),
             (input_triangle.display(2).x, input_triangle.display(2).y)))
     else:
-        pygame.draw.line(SCREEN, colour, (input_triangle.display(0).x, input_triangle.display(0).y),
-                     (input_triangle.display(1).x, input_triangle.display(1).y))
-        pygame.draw.line(SCREEN, WHITE, (input_triangle.display(1).x, input_triangle.display(1).y),
-                        (input_triangle.display(2).x, input_triangle.display(2).y))
-        pygame.draw.line(SCREEN, WHITE, (input_triangle.display(2).x, input_triangle.display(2).y),
-                        (input_triangle.display(0).x, input_triangle.display(0).y))
+        pygame.draw.line(SCREEN, colour,
+                    (input_triangle.display(0).x, input_triangle.display(0).y),
+                    (input_triangle.display(1).x, input_triangle.display(1).y))
+        pygame.draw.line(SCREEN, WHITE,
+                    (input_triangle.display(1).x, input_triangle.display(1).y),
+                    (input_triangle.display(2).x, input_triangle.display(2).y))
+        pygame.draw.line(SCREEN, WHITE,
+                    (input_triangle.display(2).x, input_triangle.display(2).y),
+                    (input_triangle.display(0).x, input_triangle.display(0).y))
 
     return
 
