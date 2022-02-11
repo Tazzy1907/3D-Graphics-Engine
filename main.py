@@ -23,12 +23,17 @@ LEAVE_TRAIL = False  # Change if user wishes to leave a trail behind. (Not refre
 DRAW_NET = False  # Change if the user wishes only to view the edges of the shape, and not whole colours.
 
 # Constants for the mathematic functions.
-OFFSET = 3
+OFFSET = 6
 NEAR = 0.1
 FAR = 1000
 FOV = 90
 ASPECTRATIO = HEIGHT / WIDTH  # 1.7777777
 FOVRAD = 1 / (np.tan(FOV * 0.5 / 180 * np.pi))  # 1.0000000000000002
+
+# Locations
+SPHERE_LOCATION = r'Object Files\sphereblend.obj'
+TORUS_LOCATION = r'Object Files\torus.obj'
+MONKEY_LOCATION = r'Object Files\monkey.obj' # Needs to be input.
 
 
 class Vec3D:  # Each Vec3D should be a point, with an x, y, z coordinate.
@@ -199,32 +204,35 @@ def cube():
         [[1.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 0.0]],
         [[1.0, 0.0, 1.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]]
 
-    return Mesh(points)
+    cubeMesh = Mesh(points)
+
+    return cubeMesh
 
 
 def sphere():
-    file = open(r'Graphics Engine\sphereblend.obj')    
+    file = open(SPHERE_LOCATION)
+    
     points = create_tris(file)
 
-    return Mesh(points)
+    sphereMesh = Mesh(points)
+
+    return sphereMesh
 
 
 def torus():
-    file = open(r'Graphics Engine\torus.obj')
+    file = open(TORUS_LOCATION)
+
     points = create_tris(file)
 
-    return Mesh(points)
+    torusMesh = Mesh(points)
 
-
-def monkey():
-    file = open(r'Graphics Engine\monkey.obj')
-    points = create_tris(file)
-    return Mesh(points)
+    return torusMesh
 
 
 def colour_scale(dot_product, colour=np.full(3, 0.0)):
     for i in range(3):
-        colour[i] = 255 * abs(dot_product)  # Abs function has been added as a temporary fix.
+        colour[0] = 255 * abs(dot_product)  # Abs function has been added as a temporary fix.
+        colour[2] = 255 * abs(dot_product)
 
     return colour
 
@@ -289,7 +297,7 @@ def draw_points(mesh):
 
             light_dp = dot_product(normal, light_direction)
 
-            print(normal_dp)
+            colour_scale(light_dp)
 
             proj_vec1 = matrix_vector_multiplication(vec_one, projection)  # Multiplies vector by projection matrix.
             proj_vec2 = matrix_vector_multiplication(vec_two, projection)
@@ -320,18 +328,21 @@ def draw_points(mesh):
     
 
 def draw_triangle(input_triangle, colour=WHITE):
-    if not DRAW_NET:
+    if not DRAW_NET:  # If the DRAW_NET option is not enabled, it will draw filled triangles, else it will draw single lines to make up the triangle.
         pygame.draw.polygon(SCREEN, colour, (
             (input_triangle.display(0).x, input_triangle.display(0).y),  # Points of triangle.
             (input_triangle.display(1).x, input_triangle.display(1).y),
             (input_triangle.display(2).x, input_triangle.display(2).y)))
     else:
-        pygame.draw.line(SCREEN, colour, (input_triangle.display(0).x, input_triangle.display(0).y),
-                     (input_triangle.display(1).x, input_triangle.display(1).y))
-        pygame.draw.line(SCREEN, WHITE, (input_triangle.display(1).x, input_triangle.display(1).y),
-                        (input_triangle.display(2).x, input_triangle.display(2).y))
-        pygame.draw.line(SCREEN, WHITE, (input_triangle.display(2).x, input_triangle.display(2).y),
-                        (input_triangle.display(0).x, input_triangle.display(0).y))
+        pygame.draw.line(SCREEN, colour,
+                    (input_triangle.display(0).x, input_triangle.display(0).y),
+                    (input_triangle.display(1).x, input_triangle.display(1).y))
+        pygame.draw.line(SCREEN, WHITE,
+                    (input_triangle.display(1).x, input_triangle.display(1).y),
+                    (input_triangle.display(2).x, input_triangle.display(2).y))
+        pygame.draw.line(SCREEN, WHITE,
+                    (input_triangle.display(2).x, input_triangle.display(2).y),
+                    (input_triangle.display(0).x, input_triangle.display(0).y))
 
     return
 
@@ -340,9 +351,8 @@ def on_user_update():
     cubeMesh = cube()  # Contains points for a 3D cube.
     sphereMesh = sphere()
     torusMesh = torus()
-    monkeyMesh = monkey()
     
-    draw_points(monkeyMesh)
+    draw_points(torusMesh)
     
     return
 
