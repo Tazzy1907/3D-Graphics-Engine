@@ -21,6 +21,7 @@ THETA_INCREMENT = 0.02
 
 LEAVE_TRAIL = False  # Change if user wishes to leave a trail behind. (Not refreshing the screen after an image has been drawn.)
 DRAW_NET = False  # Change if the user wishes only to view the edges of the shape, and not whole colours.
+DEPTH_BUFFER = True  # Updates after each triangle drawn, avoiding the glitch that causes you to see objects behind others. Unfortunately, PyGame isn't really built for this.
 
 # Constants for the mathematic functions.
 OFFSET = 6
@@ -345,8 +346,11 @@ def draw_points(mesh):
         for triangle in sorted_triangles:
             draw_triangle(triangle, colour_scale(light_dp))
             
-    pygame.display.flip()
+            if DEPTH_BUFFER:
+                pygame.display.update()
     
+    pygame.display.update()
+
     return
     
 
@@ -367,8 +371,6 @@ def draw_triangle(input_triangle, colour=WHITE):
                     (input_triangle.display(2).x, input_triangle.display(2).y),
                     (input_triangle.display(0).x, input_triangle.display(0).y))
 
-    
-
     return
 
 
@@ -377,7 +379,7 @@ def on_user_update():
     sphereMesh = sphere()
     torusMesh = torus()
     
-    draw_points(cubeMesh)
+    draw_points(torusMesh)
     
     return
 
