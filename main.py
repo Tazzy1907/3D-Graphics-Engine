@@ -237,6 +237,21 @@ def colour_scale(dot_product, colour=np.full(3, 0.0)):
     return colour
 
 
+def sort_triangles(triangle_list):  # Sorts triangles by midpoint of their z values.
+    for i in range(len(triangle_list) - 1):
+        triangle1_z = triangle_list[i].display(0).z + triangle_list[i].display(1).z + triangle_list[i].display(2).z     
+        triangle1_z /= 3
+        triangle2_z = triangle_list[i + 1].display(0).z + triangle_list[i + 1].display(1).z + triangle_list[i + 1].display(2).z 
+        triangle2_z /= 3
+
+        if triangle1_z > triangle2_z:  # A swap must happen as triangle 1's z values are greater than triangle 2's, so triangle 2 should be drawn first.
+            temp = triangle_list[i]
+            triangle_list[i] = triangle_list[i + 1]
+            triangle_list[i + 1] = temp
+            
+    return triangle_list
+
+
 def draw_points(mesh):
     projection = Matrix4x4("projection")  # Creates an instance of the projection matrix.
     rotation_z = Matrix4x4("z")  # Matrix for rotation around the z-axis.
@@ -288,6 +303,8 @@ def draw_points(mesh):
 
         normal_dp = dot_product(normal, camera_to_normal)
 
+        triangles_to_draw = []
+
         if normal_dp < 0:
             
             light_direction = Vec3D(0, 0, -1)  # Lighting, facing towards the play. Done so that we check how aligned the normal of a 
@@ -320,9 +337,15 @@ def draw_points(mesh):
             projected_triangle.display(2).x *= 0.5 * WIDTH
             projected_triangle.display(2).y *= 0.5 * HEIGHT
 
-            draw_triangle(projected_triangle, colour_scale(light_dp))
+            triangles_to_draw.append(projected_triangle)
 
-    pygame.display.update()
+
+        sorted_triangles = sort_triangles(triangles_to_draw)
+
+        for triangle in sorted_triangles:
+            draw_triangle(triangle, colour_scale(light_dp))
+            
+    pygame.display.flip()
     
     return
     
@@ -344,6 +367,8 @@ def draw_triangle(input_triangle, colour=WHITE):
                     (input_triangle.display(2).x, input_triangle.display(2).y),
                     (input_triangle.display(0).x, input_triangle.display(0).y))
 
+    
+
     return
 
 
@@ -352,7 +377,7 @@ def on_user_update():
     sphereMesh = sphere()
     torusMesh = torus()
     
-    draw_points(torusMesh)
+    draw_points(cubeMesh)
     
     return
 
