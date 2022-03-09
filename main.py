@@ -21,10 +21,10 @@ THETA_INCREMENT = 0.02
 
 LEAVE_TRAIL = False  # Change if user wishes to leave a trail behind. (Not refreshing the screen after an image has been drawn.)
 DRAW_NET = False  # Change if the user wishes only to view the edges of the shape, and not whole colours.
-DEPTH_BUFFER = True  # Updates after each triangle drawn, avoiding the glitch that causes you to see objects behind others. Unfortunately, PyGame isn't really built for this.
+DEPTH_BUFFER = False  # Updates after each triangle drawn, avoiding the glitch that causes you to see objects behind others. Unfortunately, PyGame isn't really built for this.
 
 # Constants for the mathematic functions.
-OFFSET = 6
+OFFSET = 3
 NEAR = 0.1
 FAR = 1000
 FOV = 90
@@ -67,8 +67,8 @@ class Mesh:  # Each Mesh should be made up of triangles.
 
 
 class Matrix4x4:
-    def __init__(self, type):
-        self.matrix = np.full((4, 4), 0.0)  # Creates a 4x4 matrix of 0s.
+    def __init__(self, type='', size=4):
+        self.matrix = np.full((size, size), 0.0)  # Creates a 4x4 matrix of 0s.
 
         if type == "projection":
             self.matrix[0][0] = ASPECTRATIO * FOVRAD
@@ -93,6 +93,9 @@ class Matrix4x4:
             self.matrix[2][1] = -1 * np.sin(theta * 0.5)
             self.matrix[2][2] = np.cos(theta * 0.5)
             self.matrix[3][3] = 1
+        
+        elif type == "identity":
+            self.matrix = np.full((size, size), 1.0)  # Creates an identity matrix of given size.
 
     def display_matrix(self):
         return self.matrix
@@ -145,7 +148,6 @@ def create_tris(file):  # Creates triangles for the mesh to form.
 
 
 def matrix_vector_multiplication(inputv, matrix):  # Inputv is a vector, from the Vec3D class. Matrix is of the Matrix4x4 Class.
-                                
     x = inputv.x * matrix.matrix[0][0] + inputv.y * matrix.matrix[1][0] + inputv.z * matrix.matrix[2][0] + matrix.matrix[3][0]
     y = inputv.x * matrix.matrix[0][1] + inputv.y * matrix.matrix[1][1] + inputv.z * matrix.matrix[2][1] + matrix.matrix[3][1]
     z = inputv.x * matrix.matrix[0][2] + inputv.y * matrix.matrix[1][2] + inputv.z * matrix.matrix[2][2] + matrix.matrix[3][2]
@@ -159,6 +161,16 @@ def matrix_vector_multiplication(inputv, matrix):  # Inputv is a vector, from th
         outputv.z /= w
 
     return outputv
+
+
+def matrix_matrix_multiplication(matrix1, matrix2):
+    new_matrix = Matrix4x4()
+
+    for row in range(4):
+        for column in range(4):
+            new_matrix
+
+    return new_matrix
 
 
 def normalise(vector, component):  # Function to normalise vectors by creating a unit vector.
@@ -379,7 +391,7 @@ def on_user_update():
     sphereMesh = sphere()
     torusMesh = torus()
     
-    draw_points(torusMesh)
+    draw_points(sphereMesh)
     
     return
 
