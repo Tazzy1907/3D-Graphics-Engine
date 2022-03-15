@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+import time
 
 # Constants
 
@@ -24,7 +25,7 @@ DRAW_NET = False  # Change if the user wishes only to view the edges of the shap
 DEPTH_BUFFER = True  # Updates after each triangle drawn, avoiding the glitch that causes you to see objects behind others. Unfortunately, PyGame isn't really built for this.
 
 # Constants for the mathematic functions.
-OFFSET = 6
+OFFSET = 3
 NEAR = 0.1
 FAR = 1000
 FOV = 90
@@ -230,6 +231,16 @@ def torus():
     return torusMesh
 
 
+def monkey():
+    file = open(MONKEY_LOCATION)
+
+    points = create_tris(file)
+
+    monkeyMesh = Mesh(points)
+
+    return monkeyMesh
+
+
 def colour_scale(dot_product, colour=np.full(3, 0.0)):
     for i in range(3):
         colour[0] = 255 * abs(dot_product)  # Abs function has been added as a temporary fix.
@@ -341,15 +352,17 @@ def draw_points(mesh):
             triangles_to_draw.append(projected_triangle)
 
 
-        sorted_triangles = sort_triangles(triangles_to_draw)
+        #sorted_triangles = sort_triangles(triangles_to_draw)
+        sorted_triangles = triangles_to_draw
 
         for triangle in sorted_triangles:
             draw_triangle(triangle, colour_scale(light_dp))
             
-            if DEPTH_BUFFER:
-                pygame.display.update()
+            #if DEPTH_BUFFER:
+             #   pygame.display.update()
     
     pygame.display.update()
+    # time.sleep(3)
 
     return
     
@@ -378,8 +391,11 @@ def on_user_update():
     cubeMesh = cube()  # Contains points for a 3D cube.
     sphereMesh = sphere()
     torusMesh = torus()
+    monkeyMesh = monkey()
     
     draw_points(torusMesh)
+    # draw_points(sphereMesh)
+
     
     return
 
