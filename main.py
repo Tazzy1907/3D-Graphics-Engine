@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+import time
 
 # Constants
 
@@ -21,6 +22,7 @@ THETA_INCREMENT = 0.02
 
 LEAVE_TRAIL = False  # Change if user wishes to leave a trail behind. (Not refreshing the screen after an image has been drawn.)
 DRAW_NET = False  # Change if the user wishes only to view the edges of the shape, and not whole colours.
+DEPTH_BUFFER = False  # Updates after each triangle drawn, avoiding the glitch that causes you to see objects behind others. Unfortunately, PyGame isn't really built for this.
 
 # Constants for the mathematic functions.
 OFFSET = 3
@@ -29,6 +31,11 @@ FAR = 1000
 FOV = 90
 ASPECTRATIO = HEIGHT / WIDTH  # 1.7777777
 FOVRAD = 1 / (np.tan(FOV * 0.5 / 180 * np.pi))  # 1.0000000000000002
+
+# Locations
+SPHERE_LOCATION = r'Object Files\sphereblend.obj'
+TORUS_LOCATION = r'Object Files\torus.obj'
+MONKEY_LOCATION = r'Object Files\monkey.obj' # Needs to be input.
 
 
 class Vec3D:  # Each Vec3D should be a point, with an x, y, z coordinate.
@@ -61,8 +68,8 @@ class Mesh:  # Each Mesh should be made up of triangles.
 
 
 class Matrix4x4:
-    def __init__(self, type):
-        self.matrix = np.full((4, 4), 0.0)  # Creates a 4x4 matrix of 0s.
+    def __init__(self, type='', size=4):
+        self.matrix = np.full((size, size), 0.0)  # Creates a 4x4 matrix of 0s.
 
         if type == "projection":
             self.matrix[0][0] = ASPECTRATIO * FOVRAD
@@ -87,13 +94,61 @@ class Matrix4x4:
             self.matrix[2][1] = -1 * np.sin(theta * 0.5)
             self.matrix[2][2] = np.cos(theta * 0.5)
             self.matrix[3][3] = 1
+        
+        elif type == "identity":
+            self.matrix = np.full((size, size), 1.0)  # Creates an identity matrix of given size.
 
     def display_matrix(self):
         return self.matrix
 
 
+def analyse_file(file):  # Function to read through object files.
+    file_contents = []
+    coords = []
+    addresses = []
+
+    for line in file:
+        file_contents.append(line)
+
+    for i in range(3):
+        file_contents.pop(0)
+
+    address_count = 0
+    for i in range(len(file_contents)):
+        if file_contents[i][0] == 'v':
+            file_contents[i] = file_contents[i][2:]
+            file_contents[i] == file_contents[i][:-1]
+            coords.append(file_contents[i].split())
+
+            for j in range(len(coords[i])):
+                coords[i][j] = float(coords[i][j])
+
+        
+        elif file_contents[i][0] == "f":
+            file_contents[i] = file_contents[i][2:]
+            file_contents[i] == file_contents[i][:-1]
+            addresses.append(file_contents[i].split())
+
+            for j in range(len(addresses[address_count])):
+                addresses[address_count][j] = int(addresses[address_count][j])
+            address_count += 1
+    
+    return coords, addresses
+
+
+def create_tris(file):  # Creates triangles for the mesh to form.
+    coords, addresses = analyse_file(file)
+    triangles = []
+    for triangle_face in addresses:
+        triangle = []
+        for address in triangle_face:
+            triangle.append(coords[address - 1])
+        triangles.append(triangle)
+        
+    return triangles
+
+
 def matrix_vector_multiplication(inputv, matrix):  # Inputv is a vector, from the Vec3D class. Matrix is of the Matrix4x4 Class.
-                                
     x = inputv.x * matrix.matrix[0][0] + inputv.y * matrix.matrix[1][0] + inputv.z * matrix.matrix[2][0] + matrix.matrix[3][0]
     y = inputv.x * matrix.matrix[0][1] + inputv.y * matrix.matrix[1][1] + inputv.z * matrix.matrix[2][1] + matrix.matrix[3][1]
     z = inputv.x * matrix.matrix[0][2] + inputv.y * matrix.matrix[1][2] + inputv.z * matrix.matrix[2][2] + matrix.matrix[3][2]
@@ -107,6 +162,16 @@ def matrix_vector_multiplication(inputv, matrix):  # Inputv is a vector, from th
         outputv.z /= w
 
     return outputv
+
+
+def matrix_matrix_multiplication(matrix1, matrix2):
+    new_matrix = Matrix4x4()
+
+    for row in range(4):
+        for column in range(4):
+            new_matrix
+
+    return new_matrix
 
 
 def normalise(vector, component):  # Function to normalise vectors by creating a unit vector.
@@ -157,12 +222,58 @@ def cube():
 
     return cubeMesh
 
+
+def sphere():
+    file = open(SPHERE_LOCATION)
+    
+    points = create_tris(file)
+
+    sphereMesh = Mesh(points)
+
+    return sphereMesh
+
+
+def torus():
+    file = open(TORUS_LOCATION)
+
+    points = create_tris(file)
+
+    torusMesh = Mesh(points)
+
+    return torusMesh
+
+
+def monkey():
+    file = open(MONKEY_LOCATION)
+
+    points = create_tris(file)
+
+    monkeyMesh = Mesh(points)
+
+    return monkeyMesh
+
+
 def colour_scale(dot_product, colour=np.full(3, 0.0)):
     for i in range(3):
-        colour[0] = 255 * dot_product
-        colour[2] = 255 * dot_product
+        colour[0] = 255 * abs(dot_product)  # Abs function has been added as a temporary fix.
+        colour[2] = 255 * abs(dot_product)
 
     return colour
+
+
+def sort_triangles(triangle_list):  # Sorts triangles by midpoint of their z values.
+    for i in range(len(triangle_list) - 1):
+        triangle1_z = triangle_list[i].display(0).z + triangle_list[i].display(1).z + triangle_list[i].display(2).z     
+        triangle1_z /= 3
+        triangle2_z = triangle_list[i + 1].display(0).z + triangle_list[i + 1].display(1).z + triangle_list[i + 1].display(2).z 
+        triangle2_z /= 3
+
+        if triangle1_z > triangle2_z:  # A swap must happen as triangle 1's z values are greater than triangle 2's, so triangle 2 should be drawn first.
+            temp = triangle_list[i]
+            triangle_list[i] = triangle_list[i + 1]
+            triangle_list[i + 1] = temp
+            
+    return triangle_list
 
 
 def draw_points(mesh):
@@ -216,6 +327,8 @@ def draw_points(mesh):
 
         normal_dp = dot_product(normal, camera_to_normal)
 
+        triangles_to_draw = []
+
         if normal_dp < 0:
             
             light_direction = Vec3D(0, 0, -1)  # Lighting, facing towards the play. Done so that we check how aligned the normal of a 
@@ -248,33 +361,53 @@ def draw_points(mesh):
             projected_triangle.display(2).x *= 0.5 * WIDTH
             projected_triangle.display(2).y *= 0.5 * HEIGHT
 
-            draw_triangle(projected_triangle, colour_scale(light_dp))
+            triangles_to_draw.append(projected_triangle)
 
-    pygame.display.update()
+
+        #sorted_triangles = sort_triangles(triangles_to_draw)
+        sorted_triangles = triangles_to_draw
+
+        for triangle in sorted_triangles:
+            draw_triangle(triangle, colour_scale(light_dp))
+            
+            #if DEPTH_BUFFER:
+             #   pygame.display.update()
     
+    pygame.display.update()
+    # time.sleep(3)
+
     return
     
 
 def draw_triangle(input_triangle, colour=WHITE):
-    if not DRAW_NET:
+    if not DRAW_NET:  # If the DRAW_NET option is not enabled, it will draw filled triangles, else it will draw single lines to make up the triangle.
         pygame.draw.polygon(SCREEN, colour, (
             (input_triangle.display(0).x, input_triangle.display(0).y),  # Points of triangle.
             (input_triangle.display(1).x, input_triangle.display(1).y),
             (input_triangle.display(2).x, input_triangle.display(2).y)))
     else:
-        pygame.draw.line(SCREEN, colour, (input_triangle.display(0).x, input_triangle.display(0).y),
-                     (input_triangle.display(1).x, input_triangle.display(1).y))
-        pygame.draw.line(SCREEN, WHITE, (input_triangle.display(1).x, input_triangle.display(1).y),
-                        (input_triangle.display(2).x, input_triangle.display(2).y))
-        pygame.draw.line(SCREEN, WHITE, (input_triangle.display(2).x, input_triangle.display(2).y),
-                        (input_triangle.display(0).x, input_triangle.display(0).y))
+        pygame.draw.line(SCREEN, colour,
+                    (input_triangle.display(0).x, input_triangle.display(0).y),
+                    (input_triangle.display(1).x, input_triangle.display(1).y))
+        pygame.draw.line(SCREEN, WHITE,
+                    (input_triangle.display(1).x, input_triangle.display(1).y),
+                    (input_triangle.display(2).x, input_triangle.display(2).y))
+        pygame.draw.line(SCREEN, WHITE,
+                    (input_triangle.display(2).x, input_triangle.display(2).y),
+                    (input_triangle.display(0).x, input_triangle.display(0).y))
 
     return
 
 
 def on_user_update():
     cubeMesh = cube()  # Contains points for a 3D cube.
-    draw_points(cubeMesh)
+    sphereMesh = sphere()
+    torusMesh = torus()
+    monkeyMesh = monkey()
+    
+    draw_points(torusMesh)
+    # draw_points(sphereMesh)
+
     
     return
 
